@@ -10,7 +10,7 @@ const DEFAULTS = {
   cloudUrl: "https://cloud.zed.dev",
   llmUrl: "https://cloud.zed.dev",
   providerNpm: "@ai-sdk/openai",
-  zedVersion: process.env.ZED_APP_VERSION || "0.227.1+stable",
+  zedVersion: process.env.ZED_APP_VERSION || "1.9.0+stable",
   apiKey: "zed-cloud",
 };
 

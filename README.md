@@ -1,4 +1,4 @@
-# opencode-zed-auth
+# opencode-zed-auth-new
 
 OpenCode plugin that routes model discovery and completions through Zed's hosted AI APIs.
 
