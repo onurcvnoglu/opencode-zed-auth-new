@@ -148,23 +148,45 @@ function parseSecretToolSearchOutput(output, preferredUserId = null) {
     : null;
 }
 
+function parseSecurityFindOutput(output) {
+  const text = String(output);
+  const userId = text.match(/^\s*"acct"<blob>="(.+)"$/m)?.[1]?.trim();
+  const accessToken = text.match(/^password: "([\s\S]*)"$/m)?.[1]?.trim();
+
+  return userId && accessToken ? { userId, accessToken: normalizeAccessToken(accessToken) } : null;
+}
+
 async function readLocalZedCredentials(urls, preferredUserId = null) {
-  if (process.platform !== "linux") {
-    return null;
+  if (process.platform === "darwin") {
+    try {
+      const args = ["find-internet-password", "-s", urls.serverUrl, "-g"];
+      if (preferredUserId) {
+        args.push("-a", preferredUserId);
+      }
+
+      const { stdout, stderr } = await execFileAsync("security", args);
+      return parseSecurityFindOutput(`${stdout}\n${stderr}`);
+    } catch {
+      return null;
+    }
   }
 
-  try {
-    const { stdout, stderr } = await execFileAsync("secret-tool", [
-      "search",
-      "--all",
-      "--unlock",
-      "url",
-      urls.serverUrl,
-    ]);
-    return parseSecretToolSearchOutput(`${stdout}\n${stderr}`, preferredUserId);
-  } catch {
-    return null;
+  if (process.platform === "linux") {
+    try {
+      const { stdout, stderr } = await execFileAsync("secret-tool", [
+        "search",
+        "--all",
+        "--unlock",
+        "url",
+        urls.serverUrl,
+      ]);
+      return parseSecretToolSearchOutput(`${stdout}\n${stderr}`, preferredUserId);
+    } catch {
+      return null;
+    }
   }
+
+  return null;
 }
 
 async function resolveZedCredentials(auth, urls) {
@@ -957,7 +979,7 @@ function getAuthMethods() {
   return [
     {
       type: "api",
-      label: "Use local Zed desktop credentials (Linux)",
+      label: "Use local Zed desktop credentials (macOS/Linux)",
       async authorize() {
         const credentials = await readLocalZedCredentials(getConfiguredUrls());
         return credentials ? { type: "success", key: JSON.stringify(credentials) } : { type: "failed" };

@@ -5,7 +5,7 @@ OpenCode plugin that routes model discovery and completions through Zed's hosted
 ## What It Does
 
 - registers a `zed` provider for OpenCode
-- reuses Zed desktop credentials on Linux through `secret-tool`, or accepts pasted credentials
+- reuses Zed desktop credentials from macOS Keychain or Linux `secret-tool`, or accepts pasted credentials
 - exchanges the base Zed credential for a short-lived LLM token
 - loads the Zed model catalog from `/models`
 - forwards completions to Zed `/completions`
@@ -34,7 +34,7 @@ That writes `provider.zed` into `~/.opencode/opencode.json` using the plugin's o
 
 ## Auth
 
-Preferred path on Linux:
+Preferred path on macOS/Linux:
 
 ```zsh
 opencode auth login
@@ -44,7 +44,7 @@ Then choose:
 
 - `Other`
 - provider id: `zed`
-- `Use local Zed desktop credentials (Linux)`
+- `Use local Zed desktop credentials (macOS/Linux)`
 
 Manual fallback:
 
@@ -52,7 +52,14 @@ Manual fallback:
 - `userId`: `attribute.username` from `secret-tool`
 - `accessToken`: the full value after `secret =`, not just the inner `token`
 
-To inspect the local Zed credential:
+To inspect the local Zed credential on macOS:
+
+```zsh
+security dump-keychain | grep -i -A 5 -B 5 zed
+security find-internet-password -s "https://zed.dev" -a "<user id>" -w
+```
+
+To inspect the local Zed credential on Linux:
 
 ```zsh
 secret-tool search --all --unlock url https://zed.dev
