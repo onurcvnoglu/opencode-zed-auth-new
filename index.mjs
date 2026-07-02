@@ -794,6 +794,32 @@ function streamJsonLinesAsSse(response) {
   return new Response(stream, { status: response.status, statusText: response.statusText, headers });
 }
 
+function normalizeAnthropicProviderRequest(body) {
+  if (!body || !Array.isArray(body.messages)) {
+    return body;
+  }
+
+  const messages = body.messages.map((message) => {
+    if (!message || !Array.isArray(message.content)) {
+      return message;
+    }
+
+    const content = message.content.map((block) => {
+      if (block && block.type === "tool_result") {
+        return {
+          ...block,
+          is_error: block.is_error ?? false,
+        };
+      }
+      return block;
+    });
+
+    return { ...message, content };
+  });
+
+  return { ...body, messages };
+}
+
 async function sendCompletionRequest({ requestInput, init, runtimeState, urls, llmToken, zedVersion }) {
   const { body, requestHeaders, zedModel } = await parseProviderRequest(requestInput, init, runtimeState);
   const threadId = requestHeaders.get(HEADERS.threadId) || undefined;
@@ -801,7 +827,11 @@ async function sendCompletionRequest({ requestInput, init, runtimeState, urls, l
   const intent = requestHeaders.get(HEADERS.intent) || undefined;
   const signal = init?.signal ?? (requestInput instanceof Request ? requestInput.signal : undefined);
   const providerRequest =
-    zedModel.provider === "open_ai" ? normalizeOpenAiProviderRequest(body, threadId, zedModel) : body;
+    zedModel.provider === "open_ai"
+      ? normalizeOpenAiProviderRequest(body, threadId, zedModel)
+      : zedModel.provider === "anthropic"
+        ? normalizeAnthropicProviderRequest(body)
+        : body;
 
   if (zedModel.provider === "open_ai") {
     debugLog("openai provider_request summary", {

@@ -1,6 +1,6 @@
 {
   "name": "opencode-zed-auth-new",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "OpenCode Zed Auth plugin to integrate Zed/OpenAI auth and token management.",
   "homepage": "https://github.com/onurcvnoglu/opencode-zed-auth-new",
   "repository": {
